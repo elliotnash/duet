@@ -25,23 +25,32 @@ void system_fmt(char* format, ...) {
 }
 
 static int lastKeyboardConnected, lastRotation, lastMode = -1;
-/*
-Modes:
-    0: auto
-    1: mirror
-    2: landscape
-    3: portrait 90deg
-    4: portrait -90deg
-Rotations:
-    0: landscape
-    1: portrait 90deg
-    2: portrait -90deg
-*/
+/** 
+ * Sets the layout for a given keyboard and rotation status
+ * 
+ * @param keyboardConnected Whether the keyboard is corrected
+ * 
+ * @param rotation The device rotation:
+ *      0 = landscape,
+ *      1 = portrait 90deg,
+ *      2 = portrait -90deg
+ * 
+ * @param mode The display mode:
+ *      0 = auto,
+ *      1 = mirror,
+ *      2 = landscape,
+ *      3 = portrait 90deg,
+ *      4 = portrait -90deg
+ */
 void setLayout(int keyboardConnected, int rotation, int mode) {
     // If nothings changed no need to update (we only care about rotation in auto.).
     if (lastKeyboardConnected == keyboardConnected && lastMode == mode && (lastRotation == rotation || mode != MODE_AUTO)) {
+        lastRotation = rotation;
         return;
     }
+    lastKeyboardConnected = keyboardConnected;
+    lastMode = mode;
+    lastRotation = rotation;
 
     // If keyboard not connected, always show only one monitor.
     if (keyboardConnected) {

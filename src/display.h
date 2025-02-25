@@ -13,7 +13,7 @@
 
 void system_fmt(char* format, ...);
 
-void setLayout();
+void setLayout(int keyboardConnected, int rotation, int mode);
 
 void setMirror();
 void setSingleMonitor();

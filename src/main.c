@@ -61,6 +61,9 @@ void checkKeyboardConnected() {
     libusb_free_device_list(devs, 1);
     libusb_exit(ctx);
 
+    isKeyboardConnected = connected;
+    setLayout(connected, 0, 0);
+
     if (connected != isKeyboardConnected) {
         // Then our connection status has changed
         isKeyboardConnected = connected;
@@ -144,11 +147,8 @@ void watchDevices() {
 }
 
 int main() {
-    // checkKeyboardConnected();
-
-    // watchDevices();
-
-    setLayout();
+    checkKeyboardConnected();
+    watchDevices();
 
     return 0;
 }
