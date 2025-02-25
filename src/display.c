@@ -75,7 +75,7 @@ void setLayout(int keyboardConnected, int rotation, int mode) {
     }
 
     // Restart ags, required due to https://github.com/end-4/dots-hyprland/issues/791
-    system("agsv1 -q; swww kill; agsv1 & swww-daemon & disown");
+    system("agsv1 -q; swww kill; agsv1 & disown & swww-daemon & disown");
 }
 
 // Mirrors the top display and bottom such that the top is flipped 180 (to be someone accross a table).
