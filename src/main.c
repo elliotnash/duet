@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <sys/epoll.h>
 #include <sys/inotify.h>
+#include "display.h"
 
 #define IN_BUFF_SIZE 16384
 
@@ -143,9 +144,11 @@ void watchDevices() {
 }
 
 int main() {
-    checkKeyboardConnected();
+    // checkKeyboardConnected();
 
-    watchDevices();
+    // watchDevices();
+
+    setLayout();
 
     return 0;
 }
