@@ -8,141 +8,141 @@
 #include <sys/epoll.h>
 #include <sys/inotify.h>
 #include <gio/gio.h>
+#include <libudev.h>
+#include <fcntl.h>
 
 #include "keyboard.h"
 #include "display.h"
 
-const uint16_t keyboardVendorId = 0x0b05;
-const uint16_t keyboardProductId = 0x1b2c;
+const char* keyboardVendorId = "0b05";
+const char* keyboardProductId = "1b2c";
 
-static const char* watchBaseDir = "/dev/bus/usb";
+typedef struct {
+    char *devpath;
+    char *vendor_id;
+    char *product_id;
+} device_info_t;
 
-static guint inotify_watch_id = 0;
-static libusb_context *ctx;
+typedef struct {
+    struct udev_monitor *monitor;
+    struct udev *udev_ctx;
+    GHashTable *devices;
+    duet_context_t *context;
+} keyboard_context_t;
 
-/**
- * Checks if the zenbook duo keyboard is attached by POGO.
- * 
- * @returns -1 if error fetching status, 0 if keyboard is disconnected, or 1 if keyboard is connected.
- */
-int get_keyboard_status() {
-    libusb_device **devs;
+static keyboard_context_t kb_context;
 
-    ssize_t count = libusb_get_device_list(ctx, &devs);
-    if (count < 0) {
-        fprintf(stderr, "Error getting device list: %s\n", libusb_error_name(count));
-        return -1;
-    }
-
-    int connected = 0;
-	 
-    for (ssize_t i = 0; i < count; i++) {
-        libusb_device *dev = devs[i];
-        struct libusb_device_descriptor desc;
-        int res = libusb_get_device_descriptor(dev, &desc);
-        if (res < 0) {
-            fprintf(stderr, "Error getting device descriptor: %s\n", libusb_error_name(res));
-            continue;
-        }
-        if (desc.idVendor == keyboardVendorId && desc.idProduct == keyboardProductId) {
-            connected = 1;
-            break;
-        }
-    }
-    
-    libusb_free_device_list(devs, 1);
-
-    return connected;
+static void free_device_info(gpointer data) {
+    device_info_t *info = (device_info_t *) data;
+    g_free(info->devpath);
+    g_free(info->vendor_id);
+    g_free(info->product_id);
+    g_free(info);
 }
 
-static gboolean handle_inotify_event(GIOChannel *source, GIOCondition condition, gpointer data) {
-    duet_context_t *context = (duet_context_t *) data;
+static gboolean is_target_device(struct udev_device *dev) {
+    const char *vendor = udev_device_get_sysattr_value(dev, "idVendor");
+    const char *product = udev_device_get_sysattr_value(dev, "idProduct");
+    return (vendor && product && 
+            g_str_equal(vendor, keyboardVendorId) &&
+            g_str_equal(product, keyboardProductId));
+}
 
-    char buffer[IN_BUFF_SIZE];
-    gsize bytes_read;
-    GError *error = NULL;
-    
-    GIOStatus status = g_io_channel_read_chars(source, buffer, sizeof(buffer), &bytes_read, &error);
-    
-    if (status == G_IO_STATUS_ERROR) {
-        g_warning("Inotify read error: %s", error->message);
-        g_error_free(error);
-        return G_SOURCE_REMOVE;
-    }
+static gboolean udev_event(GIOChannel *source, GIOCondition condition, gpointer data) {
+    keyboard_context_t *context = (keyboard_context_t *) data;
+    struct udev_device *dev = udev_monitor_receive_device(context->monitor);
 
-    if (bytes_read == 0)
-        return G_SOURCE_CONTINUE;
+    if (dev) {
+        const char *action = udev_device_get_action(dev);
+        const char *devpath = udev_device_get_devpath(dev);
 
-    for (char *ptr = buffer; ptr < buffer + bytes_read;) {
-        struct inotify_event *event = (struct inotify_event*)ptr;
-        
-        if (event->len > 0) {
-            g_usleep(1000000);
-            int kb = get_keyboard_status();
-            if (kb != -1) {
-                printf("KB status updated: %d\n", kb);
-                context->keyboardConnected = kb;
-                // setLayout(context);
+        if (action && devpath) {
+            if (g_str_equal(action, "add") && is_target_device(dev)) {
+                // Store device details
+                device_info_t *info = g_new0(device_info_t, 1);
+                info->devpath = g_strdup(devpath);
+                info->vendor_id = g_strdup(udev_device_get_sysattr_value(dev, "idVendor"));
+                info->product_id = g_strdup(udev_device_get_sysattr_value(dev, "idProduct"));
+                g_hash_table_insert(context->devices, info->devpath, info);
+
+                g_print("Keyboard CONNECTED: %s (Vendor: %s, Product: %s)\n",
+                       devpath, info->vendor_id, info->product_id);
+                context->context->keyboardConnected = TRUE;
+                setLayout(context->context);
+            } else if (g_str_equal(action, "remove")) {
+                // Retrieve stored details
+                device_info_t *info = g_hash_table_lookup(context->devices, devpath);
+                if (info) {
+                    g_print("Keyboard DISCONNECTED: %s (Vendor: %s, Product: %s)\n",
+                           devpath, info->vendor_id, info->product_id);
+                    g_hash_table_remove(context->devices, devpath);
+                    context->context->keyboardConnected = FALSE;
+                    setLayout(context->context);
+                }
             }
         }
-
-        ptr += sizeof(struct inotify_event) + event->len;
+        udev_device_unref(dev);
     }
 
     return G_SOURCE_CONTINUE;
 }
 
-void keyboard_watch(int fd, duet_context_t *status) {
-    int res = libusb_init(&ctx);
-    if (res < 0) {
-        fprintf(stderr, "Error initializing libusb: %s\n", libusb_error_name(res));
-        return;
-    }
+// Check for existing devices on startup
+static void check_initial_devices(keyboard_context_t *context) {
+    struct udev_enumerate *enumerate = udev_enumerate_new(context->udev_ctx);
+    udev_enumerate_add_match_subsystem(enumerate, "usb");
+    udev_enumerate_add_match_property(enumerate, "DEVTYPE", "usb_device");
+    udev_enumerate_scan_devices(enumerate);
 
-    struct dirent* dent;
+    struct udev_list_entry *devices = udev_enumerate_get_list_entry(enumerate);
+    struct udev_list_entry *entry;
 
-    DIR* srcdir = opendir(watchBaseDir);
-    if (srcdir == NULL) {
-        fprintf(stderr, "Error opening /dev/bus/usb.\n");
-        return;
-    }
+    int connected = FALSE;
 
-    while((dent = readdir(srcdir)) != NULL) {
-        struct stat st;
+    udev_list_entry_foreach(entry, devices) {
+        const char *path = udev_list_entry_get_name(entry);
+        struct udev_device *dev = udev_device_new_from_syspath(context->udev_ctx, path);
 
-        if(strcmp(dent->d_name, ".") == 0 || strcmp(dent->d_name, "..") == 0)
-            continue;
+        if (is_target_device(dev)) {
+            const char *devpath = udev_device_get_devpath(dev);
+            device_info_t *info = g_new0(device_info_t, 1);
+            info->devpath = g_strdup(devpath);
+            info->vendor_id = g_strdup(udev_device_get_sysattr_value(dev, "idVendor"));
+            info->product_id = g_strdup(udev_device_get_sysattr_value(dev, "idProduct"));
+            g_hash_table_insert(context->devices, info->devpath, info);
 
-        if (fstatat(dirfd(srcdir), dent->d_name, &st, 0) < 0)
-        {
-            perror(dent->d_name);
-            continue;
+            g_print("Keyboard already CONNECTED: %s (Vendor: %s, Product: %s)\n",
+                   devpath, info->vendor_id, info->product_id);
+            connected = TRUE;
         }
-
-        if (S_ISDIR(st.st_mode)) {
-            char* watchDir = malloc((strlen(watchBaseDir) + 1 + strlen(dent->d_name)) * sizeof(char));
-            sprintf(watchDir, "%s/%s", watchBaseDir, dent->d_name);
-            
-            int wd = inotify_add_watch(fd, watchDir, IN_CREATE | IN_DELETE);
-            if (wd < 0) {
-                fprintf(stderr, "Error adding inotify watch.\n");
-            }
-        }
+        udev_device_unref(dev);
     }
+    udev_enumerate_unref(enumerate);
+
+    context->context->keyboardConnected = connected;
+    setLayout(context->context);
+}
+
+void keyboard_watch(duet_context_t *context) {
+    kb_context.context = context;
+    kb_context.devices = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, free_device_info);
+
+    kb_context.udev_ctx = udev_new();
+    kb_context.monitor = udev_monitor_new_from_netlink(kb_context.udev_ctx, "udev");
+    udev_monitor_filter_add_match_subsystem_devtype(kb_context.monitor, "usb", "usb_device");
+    udev_monitor_enable_receiving(kb_context.monitor);
+
+    int fd = udev_monitor_get_fd(kb_context.monitor);
+    fcntl(fd, F_SETFL, O_NONBLOCK);
 
     GIOChannel *channel = g_io_channel_unix_new(fd);
-    g_io_channel_set_encoding(channel, NULL, NULL);
-    g_io_channel_set_buffered(channel, FALSE);
+    g_io_add_watch(channel, G_IO_IN, udev_event, &kb_context);
 
-    inotify_watch_id = g_io_add_watch(channel, G_IO_IN | G_IO_HUP | G_IO_ERR, handle_inotify_event, status);
-
-    printf("Watches successfully established.\n");
+    check_initial_devices(&kb_context);
 }
 
 void keyboard_cleanup() {
-    if (inotify_watch_id > 0) {
-        g_source_remove(inotify_watch_id);
-    }
-
-    libusb_exit(ctx);
+    udev_monitor_unref(kb_context.monitor);
+    udev_unref(kb_context.udev_ctx);
+    g_hash_table_destroy(kb_context.devices);
 }
