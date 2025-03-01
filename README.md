@@ -4,16 +4,28 @@ A utility for managing dual-screen setups on the Asus Zenbook Duo (UX8406) under
 
 ## Features
 
-- 🔄 Automatic display toggling when keyboard is connected/disconnected
+- 🔄 Automatic secondary display toggling when keyboard is connected/disconnected
 - 🧭 Rotation detection for proper screen orientation
-- ⚡ Hyprland integration for seamless window management
 
 ## Installation
 
 ### Build Requirements
 - Meson build system
 - Ninja
-- GLib 2.0 development files
+- GLib2
+
+### Other Requirements
+
+- Hyprland
+- iio-sensor-proxy
+
+<details> <summary>Install dependancies on Arch Linux</summary>
+
+```bash
+sudo pacman -S meson ninja glib2-devel iio-sensor-proxy
+```
+
+</details>
 
 ### Build & Install
 ```bash
