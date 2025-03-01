@@ -1,12 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <libusb-1.0/libusb.h>
-#include <unistd.h>
-#include <dirent.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <sys/epoll.h>
-#include <sys/inotify.h>
 #include <gio/gio.h>
 #include <libudev.h>
 #include <fcntl.h>

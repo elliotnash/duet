@@ -1,6 +1,4 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
 #include <glib.h>
 
 #include "display.h"
@@ -58,7 +56,6 @@ void setLayout(duet_context_t *context) {
 
     // If keyboard not connected, always show only one monitor.
     if (context->keyboardConnected) {
-        printf("Setting to single monitor!\n");
         setSingleMonitor();
     } else if (context->mode == MODE_AUTO) {
         // Auto mode, set the layout for the passed rotation. If rotation not recognized do nothing

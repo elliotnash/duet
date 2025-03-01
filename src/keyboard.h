@@ -1,8 +1,6 @@
 #ifndef KEYBOARD_H
 #define KEYBOARD_H
 
-#include <stdint.h>
-
 #include "context.h"
 
 #define IN_BUFF_SIZE 16384

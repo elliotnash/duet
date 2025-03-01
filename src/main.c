@@ -1,5 +1,3 @@
-#include <stdio.h>
-#include <sys/inotify.h>
 #include <glib.h>
 
 #include "keyboard.h"
