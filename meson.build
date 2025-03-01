@@ -16,7 +16,7 @@ src_files = [
   'src/context.h'
 ]
 
-executable('duet', src_files, dependencies: [
+executable('duet', src_files, install: true, dependencies: [
   glib_dep,
   gio_dep,
   udev_dep
