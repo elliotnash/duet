@@ -24,53 +24,42 @@ void system_fmt(char* format, ...) {
     va_end(args);
 }
 
-static int lastKeyboardConnected, lastRotation, lastMode = -1;
+static duet_context_t lastContext = { .keyboardConnected = -1, .rotation = -1, .mode = -1 };
 /** 
  * Sets the layout for a given keyboard and rotation status
- * 
- * @param keyboardConnected Whether the keyboard is corrected
- * 
- * @param rotation The device rotation:
- *      0 = landscape,
- *      1 = portrait 90deg,
- *      2 = portrait -90deg
- * 
- * @param mode The display mode:
- *      0 = auto,
- *      1 = mirror,
- *      2 = landscape,
- *      3 = portrait 90deg,
- *      4 = portrait -90deg
+ * @param context The device status.
  */
-void setLayout(int keyboardConnected, int rotation, int mode) {
+void setLayout(duet_context_t *context) {
+    printf("setting kb with c: %d\n", context->keyboardConnected);
     // If nothings changed no need to update (we only care about rotation in auto.).
-    if (lastKeyboardConnected == keyboardConnected && lastMode == mode && (lastRotation == rotation || mode != MODE_AUTO)) {
-        lastRotation = rotation;
+    if (lastContext.keyboardConnected == context->keyboardConnected && lastContext.mode == context->mode && (lastContext.rotation == context->rotation || context->mode != MODE_AUTO)) {
+        lastContext.rotation = context->rotation;
         return;
     }
-    lastKeyboardConnected = keyboardConnected;
-    lastMode = mode;
-    lastRotation = rotation;
+    lastContext.keyboardConnected = context->keyboardConnected;
+    lastContext.mode = context->mode;
+    lastContext.rotation = context->rotation;
 
     // If keyboard not connected, always show only one monitor.
-    if (keyboardConnected) {
+    if (context->keyboardConnected) {
+        printf("Setting to single monitor!\n");
         setSingleMonitor();
-    } else if (mode == MODE_AUTO) {
+    } else if (context->mode == MODE_AUTO) {
         // Auto mode, set the layout for the passed rotation. If rotation not recognized do nothing
-        if (rotation == ROTATION_PORTRAIT_90) {
+        if (context->rotation == ROTATION_PORTRAIT_90) {
             setPortrait90();
-        } else if (rotation == ROTATION_PORTRAIT_270) {
+        } else if (context->rotation == ROTATION_PORTRAIT_270) {
             setPortrait270();
-        } else if (rotation == ROTATION_LANDSCAPE) {
+        } else if (context->rotation == ROTATION_LANDSCAPE) {
             setLandscape();
         }
-    } else if (mode == MODE_MIRROR) {
+    } else if (context->mode == MODE_MIRROR) {
         setMirror();
-    } else if (mode == MODE_LANDSCAPE) {
+    } else if (context->mode == MODE_LANDSCAPE) {
         setLandscape();
-    } else if (mode == MODE_PORTRAIT_90) {
+    } else if (context->mode == MODE_PORTRAIT_90) {
         setPortrait90();
-    } else if (mode == MODE_PORTRAIT_270) {
+    } else if (context->mode == MODE_PORTRAIT_270) {
         setPortrait270();
     }
 
