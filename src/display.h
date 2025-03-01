@@ -3,7 +3,7 @@
 
 #include "context.h"
 
-void system_fmt(char* format, ...);
+void system_fmt(char *format, ...);
 
 void setLayout(duet_context_t *status);
 

@@ -1,24 +1,26 @@
 #include <glib.h>
 
-#include "keyboard.h"
 #include "context.h"
+#include "keyboard.h"
 #include "rotation.h"
 
 static GMainLoop *loop;
 
 int main() {
-    duet_context_t status = { .keyboardConnected = 1, .rotation = ROTATION_LANDSCAPE, .mode = MODE_AUTO };
+  duet_context_t status = {.keyboardConnected = 1,
+                           .rotation = ROTATION_LANDSCAPE,
+                           .mode = MODE_AUTO};
 
-    keyboard_watch(&status);
-    rotation_watch(&status);
+  keyboard_watch(&status);
+  rotation_watch(&status);
 
-    loop = g_main_loop_new(NULL, TRUE);
-    g_main_loop_run(loop);
+  loop = g_main_loop_new(NULL, TRUE);
+  g_main_loop_run(loop);
 
-    rotation_cleanup();
-    keyboard_cleanup();
+  rotation_cleanup();
+  keyboard_cleanup();
 
-    g_main_loop_unref(loop);
+  g_main_loop_unref(loop);
 
-    return 0;
+  return 0;
 }
