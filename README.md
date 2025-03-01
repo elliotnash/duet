@@ -45,16 +45,6 @@ Add to your Hyprland config (`~/.config/hypr/hyprland.conf`):
 exec-once = duet
 ```
 
-## Dependencies
-
-- libglib2.0-dev
-
-- libgio2.0-dev
-
-- libudev-1.0
-
-- iio-sensor-proxy
-
 ## Contributing
 
 PRs welcome! Please open an issue first to discuss proposed changes.
