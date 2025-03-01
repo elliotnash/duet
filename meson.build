@@ -16,7 +16,9 @@ src_files = [
   'src/keyboard.c',
   'src/keyboard.h',
   'src/rotation.c',
-  'src/rotation.h'
+  'src/rotation.h',
+  'src/context.c',
+  'src/context.h'
 ]
 
 executable('duet', src_files, dependencies: [

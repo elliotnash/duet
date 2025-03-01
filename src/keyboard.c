@@ -120,7 +120,6 @@ static void check_initial_devices(keyboard_context_t *context) {
     udev_enumerate_unref(enumerate);
 
     context->context->keyboardConnected = connected;
-    setLayout(context->context);
 }
 
 void keyboard_watch(duet_context_t *context) {

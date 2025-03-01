@@ -32,4 +32,6 @@ struct DuetContext {
     int mode;
 } typedef duet_context_t;
 
+int parse_orientation();
+
 #endif

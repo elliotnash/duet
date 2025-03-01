@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <glib.h>
 
 #include "display.h"
 
@@ -30,15 +31,30 @@ static duet_context_t lastContext = { .keyboardConnected = -1, .rotation = -1, .
  * @param context The device status.
  */
 void setLayout(duet_context_t *context) {
-    printf("setting kb with c: %d\n", context->keyboardConnected);
-    // If nothings changed no need to update (we only care about rotation in auto.).
-    if (lastContext.keyboardConnected == context->keyboardConnected && lastContext.mode == context->mode && (lastContext.rotation == context->rotation || context->mode != MODE_AUTO)) {
+    /* If 
+        a. the keyboard is connected and was previously connected
+        b. the keyboard state, mode, and rotation haven't changed
+        c. the keyboard state and mode haven't changed, and the rotation is manually selected
+
+    Then there's no need to update display.
+    */
+    if (
+        (lastContext.keyboardConnected && context->keyboardConnected)
+        || (lastContext.keyboardConnected == context->keyboardConnected 
+            && lastContext.mode == context->mode 
+            && (lastContext.rotation == context->rotation || context->mode != MODE_AUTO)
+        )
+    ) {
+        lastContext.keyboardConnected = context->keyboardConnected;
+        lastContext.mode = context->mode;
         lastContext.rotation = context->rotation;
         return;
     }
     lastContext.keyboardConnected = context->keyboardConnected;
     lastContext.mode = context->mode;
     lastContext.rotation = context->rotation;
+
+    g_print("Updating layout - keyboard: %d, rotation: %d, mode: %d\n", context->keyboardConnected, context->rotation, context->mode);
 
     // If keyboard not connected, always show only one monitor.
     if (context->keyboardConnected) {
