@@ -6,7 +6,9 @@
 // TODO move some of this to a config (json?)
 
 static const char *primaryMonitor = "eDP-1";
+static const char *primaryDigitalizer = "elan9008:00-04f3:425b";
 static const char *secondaryMonitor = "eDP-2";
+static const char *secondaryDigitalizer = "elan9009:00-04f3:425a";
 
 static const int internalHeight = 1800;
 static const double internalScale = 1.25;
@@ -80,7 +82,8 @@ void setLayout(duet_context_t *context) {
 
   // Restart ags, required due to
   // https://github.com/end-4/dots-hyprland/issues/791
-  system("agsv1 -q; swww kill; agsv1 & disown & swww-daemon & disown");
+  system("pkill agsv1; swww kill; sleep 0.1; agsv1 & disown & swww-daemon & "
+         "disown");
 }
 
 // Mirrors the top display and bottom such that the top is flipped 180 (to be
@@ -88,22 +91,26 @@ void setLayout(duet_context_t *context) {
 void setMirror() {
   system_fmt("hyprctl --batch \"keyword monitor "
              "%s,preferred,0x0,%f,transform,2,vrr,%d ; keyword monitor "
-             "%s,preferred,0x0,%f,mirror,%s,vrr,%d \"",
+             "%s,preferred,0x0,%f,mirror,%s,vrr,%d ; keyword "
+             "device[%s]:transform 2 ; keyword device[%s]:transform 0\"",
              primaryMonitor, internalScale, vrr, secondaryMonitor,
-             internalScale, primaryMonitor, vrr);
+             internalScale, primaryMonitor, vrr, primaryDigitalizer,
+             secondaryDigitalizer);
 }
 
 // Disables the monitor under the keyboard
 void setSingleMonitor() {
-  system_fmt("hyprctl --batch \"keyword monitor %s,preferred,0x0,%f,vrr,%d ; "
-             "keyword monitor %s,disabled \"",
-             primaryMonitor, internalScale, vrr, secondaryMonitor);
+  system_fmt(
+      "hyprctl --batch \"keyword monitor %s,preferred,0x0,%f,vrr,%d ; "
+      "keyword monitor %s,disabled ; keyword input:touchdevice:transform 0\"",
+      primaryMonitor, internalScale, vrr, secondaryMonitor);
 }
 
 // Both monitors enabled in landscape mode (stacked vertically)
 void setLandscape() {
   system_fmt("hyprctl --batch \"keyword monitor %s,preferred,0x0,%f,vrr,%d ; "
-             "keyword monitor %s,preferred,0x%d,%f,vrr,%d \"",
+             "keyword monitor %s,preferred,0x%d,%f,vrr,%d ; keyword "
+             "input:touchdevice:transform 0\"",
              primaryMonitor, internalScale, vrr, secondaryMonitor,
              internalLogicalHeight, internalScale, vrr);
 }
@@ -113,7 +120,8 @@ void setLandscape() {
 void setPortrait90() {
   system_fmt("hyprctl --batch \"keyword monitor "
              "%s,preferred,%dx0,%f,transform,1,vrr,%d ; keyword monitor "
-             "%s,preferred,0x0,%f,transform,1,vrr,%d \"",
+             "%s,preferred,0x0,%f,transform,1,vrr,%d ; keyword "
+             "input:touchdevice:transform 1\"",
              primaryMonitor, internalLogicalHeight, internalScale, vrr,
              secondaryMonitor, internalScale, vrr);
 }
@@ -124,7 +132,8 @@ void setPortrait90() {
 void setPortrait270() {
   system_fmt("hyprctl --batch \"keyword monitor "
              "%s,preferred,0x0,%f,transform,3,vrr,%d ; keyword monitor "
-             "%s,preferred,%dx0,%f,transform,3,vrr,%d \"",
+             "%s,preferred,%dx0,%f,transform,3,vrr,%d ; keyword "
+             "input:touchdevice:transform 3\"",
              primaryMonitor, internalScale, vrr, secondaryMonitor,
              internalLogicalHeight, internalScale, vrr);
 }
