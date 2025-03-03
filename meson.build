@@ -13,7 +13,9 @@ src_files = [
   'src/rotation.c',
   'src/rotation.h',
   'src/context.c',
-  'src/context.h'
+  'src/context.h',
+  'src/command.c',
+  'src/command.h'
 ]
 
 executable('duet', src_files, install: true, dependencies: [

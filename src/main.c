@@ -3,6 +3,7 @@
 #include "context.h"
 #include "keyboard.h"
 #include "rotation.h"
+#include "command.h"
 
 static GMainLoop *loop;
 
@@ -13,10 +14,12 @@ int main() {
 
   keyboard_watch(&status);
   rotation_watch(&status);
+  command_watch(&status);
 
   loop = g_main_loop_new(NULL, TRUE);
   g_main_loop_run(loop);
 
+  command_cleanup();
   rotation_cleanup();
   keyboard_cleanup();
 
