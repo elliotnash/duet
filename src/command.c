@@ -24,14 +24,18 @@ static void mode_switch(duet_context_t *context, char *payload) {
 }
 
 static void message_received(duet_context_t *context, const char *event, size_t len) {
-    // Split first colon, before is event type, after is the payload
+    // Split first colon, before is event type, after is the payload.
     char* payload = strchr(event, ':');
     if (payload == NULL) {
         return;
     }
     *payload = '\0';
     ++payload;
-    *(payload + strlen(payload) - 1) = '\0';
+    // If last char is new line, remove it.
+    char* last = payload + strlen(payload) - 1;
+    if (*last == '\n') {
+        *last = '\0';
+    }
 
     if (g_str_equal(event, "mode")) {
         mode_switch(context, payload);
