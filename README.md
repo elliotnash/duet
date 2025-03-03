@@ -37,13 +37,16 @@ ninja
 sudo meson install
 ```
 
-## Configuration
+## Usage
 
-Add to your Hyprland config (`~/.config/hypr/hyprland.conf`):
+Configure the duet daemon to start with Hyprland
 
 ```ini
-exec-once = duet
+# ~/.config/hypr/hyprland.conf
+exec-once = duetd
 ```
+
+See `duet --help` for usage.
 
 ## Contributing
 

@@ -1,5 +1,4 @@
-#ifndef KEYBOARD_H
-#define KEYBOARD_H
+#pragma once
 
 #include "context.h"
 
@@ -11,5 +10,3 @@ extern const char *keyboardProductId;
 void keyboard_watch(duet_context_t *status);
 
 void keyboard_cleanup();
-
-#endif

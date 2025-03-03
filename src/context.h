@@ -1,5 +1,4 @@
-#ifndef CONTEXT_H
-#define CONTEXT_H
+#pragma once
 
 #define MODE_AUTO 0
 #define MODE_MIRROR 1
@@ -33,5 +32,3 @@ struct DuetContext {
 } typedef duet_context_t;
 
 int parse_orientation();
-
-#endif

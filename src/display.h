@@ -1,5 +1,4 @@
-#ifndef DISPLAY_H
-#define DISPLAY_H
+#pragma once
 
 #include "context.h"
 
@@ -12,5 +11,3 @@ void setSingleMonitor();
 void setLandscape();
 void setPortrait90();
 void setPortrait270();
-
-#endif
