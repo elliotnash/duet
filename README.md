@@ -39,7 +39,7 @@ sudo meson install
 
 ## Usage
 
-Configure the duet daemon to start with Hyprland
+Configure the duet daemon to start with Hyprland:
 
 ```ini
 # ~/.config/hypr/hyprland.conf
