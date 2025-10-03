@@ -1,5 +1,7 @@
 #pragma once
 
+#include <glib.h>
+
 #define MODE_AUTO 0
 #define MODE_MIRROR 1
 #define MODE_LANDSCAPE 2
@@ -31,4 +33,4 @@ struct DuetContext {
   int mode;
 } typedef duet_context_t;
 
-int parse_orientation();
+int parse_orientation(const gchar *orientation_str);

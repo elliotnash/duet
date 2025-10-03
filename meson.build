@@ -32,7 +32,9 @@ src_files = [
   'src/context.c',
   'src/context.h',
   'src/command.c',
-  'src/command.h'
+  'src/command.h',
+  'src/config.c',
+  'src/config.h'
 ]
 
 daemon_src = src_files + ['src/daemon.c']

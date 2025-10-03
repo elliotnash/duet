@@ -1,7 +1,5 @@
 #include "context.h"
 
-#include <glib.h>
-
 int parse_orientation(const gchar *orientation_str) {
   if (g_strcmp0(orientation_str, "normal") == 0)
     return ROTATION_LANDSCAPE;
