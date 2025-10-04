@@ -3,6 +3,11 @@
 #include <glib.h>
 
 typedef struct duet_config_s {
+	// Brightness sync settings (group: [Brightness Sync])
+	gboolean sync_brightness;
+	gchar *source_display;
+	gchar *target_display;
+
 	// Layout commands (group: [Layout Commands])
 	gchar *single_monitor_command;
 	gchar *mirror_command;

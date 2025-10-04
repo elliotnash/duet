@@ -23,6 +23,8 @@ dependencies = [
 
 src_files = [
   git_version_h,
+  'src/brightness.c',
+  'src/brightness.h',
   'src/display.h',
   'src/display.c',
   'src/keyboard.c',
